@@ -6,7 +6,7 @@ import { createApp, h } from 'vue';
 import { createPinia } from 'pinia';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel Chat';
+const appName = import.meta.env.VITE_APP_NAME || 'ChatBot';
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
