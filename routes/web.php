@@ -1,27 +1,49 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use Illuminate\Foundation\Application;
+use App\Http\Controllers\ChatController;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
+    if (Auth::check()) {
+        return redirect()->route('chat');
+    }
+
+    $users = User::select('id', 'name', 'email')->get();
+
+    return inertia('Welcome', [
+        'users' => $users,
     ]);
+})->name('welcome');
+
+Route::post('/login/{user}', function (User $user) {
+    Auth::login($user);
+    return redirect()->route('chat');
+})->name('login');
+
+Route::post('/logout', function (Request $request) {
+    Auth::logout();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+    return redirect()->route('welcome');
+})->name('logout');
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/chat', [ChatController::class, 'index'])->name('chat');
+    Route::get('/chat/{conversation}/messages', [ChatController::class, 'messages'])
+        ->name('chat.messages');
+    Route::post('/chat/{conversation}/messages', [ChatController::class, 'sendMessage'])
+        ->name('chat.messages.send');
+    Route::post('/chat/{conversation}/read', [ChatController::class, 'markAsRead'])
+        ->name('chat.messages.read');
+    Route::post('/chat/{conversation}/typing', [ChatController::class, 'typing'])
+        ->name('chat.typing');
+    Route::post('/chat/conversation', [ChatController::class, 'createOrGet'])
+        ->name('chat.conversation.create');
+    Route::post('/chat/presence/online', [ChatController::class, 'goOnline'])
+        ->name('chat.presence.online');
+    Route::post('/chat/presence/offline', [ChatController::class, 'goOffline'])
+        ->name('chat.presence.offline');
 });
-
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
-
-require __DIR__.'/auth.php';
