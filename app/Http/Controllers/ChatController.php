@@ -5,12 +5,15 @@ namespace App\Http\Controllers;
 use App\Events\MessageRead;
 use App\Events\MessageSent;
 use App\Events\TypingEvent;
+use App\Events\UserOffline;
+use App\Events\UserOnline;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
@@ -70,6 +73,7 @@ class ChatController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
             ],
+            'onlineUserIds' => Cache::get('online_users', []),
         ]);
     }
 
@@ -206,5 +210,29 @@ class ChatController extends Controller
                 'updated_at' => $conversation->updated_at->toISOString(),
             ],
         ]);
+    }
+
+    public function goOnline(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $online = Cache::get('online_users', []);
+        $online[$user->id] = true;
+        Cache::put('online_users', $online, now()->addMinutes(5));
+
+        broadcast(new UserOnline($user))->toOthers();
+
+        return response()->json(['status' => 'online']);
+    }
+
+    public function goOffline(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $online = Cache::get('online_users', []);
+        unset($online[$user->id]);
+        Cache::put('online_users', $online, now()->addMinutes(5));
+
+        broadcast(new UserOffline($user))->toOthers();
+
+        return response()->json(['status' => 'offline']);
     }
 }
