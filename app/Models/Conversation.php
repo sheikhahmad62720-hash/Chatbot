@@ -29,7 +29,7 @@ class Conversation extends Model
         return $this->hasManyThrough(Message::class, 'conversation_user');
     }
 
-    public function getOtherUser(self $user): ?User
+    public function getOtherUser(User $user): ?User
     {
         return $this->users->first(fn (User $u) => $u->id !== $user->id);
     }

@@ -1,4 +1,3 @@
-import { onMounted, onUnmounted } from 'vue'
 import Echo from 'laravel-echo'
 import Pusher from 'pusher-js'
 import { useChatStore } from '@/stores/chatStore'
@@ -10,7 +9,10 @@ export function useChat() {
   const store = useChatStore()
 
   function initializeEcho() {
-    if (echo) return
+    if (echo) {
+      subscribeToChannels()
+      return
+    }
 
     window.Pusher = Pusher
 
@@ -63,14 +65,6 @@ export function useChat() {
       echo = null
     }
   }
-
-  onMounted(() => {
-    initializeEcho()
-  })
-
-  onUnmounted(() => {
-    disconnectEcho()
-  })
 
   return {
     initializeEcho,
