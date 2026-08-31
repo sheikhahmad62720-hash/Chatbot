@@ -53,7 +53,7 @@ class ChatController extends Controller
                     ] : null,
                     'unread_count' => $conversation->getUnreadCountForUser($user),
                     'updated_at' => $conversation->updated_at->toISOString(),
-                };
+                ];
             })
             ->sortByDesc(fn ($c) => $c['last_message'] ? $c['last_message']['created_at'] : $c['updated_at'])
             ->values();
