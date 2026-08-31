@@ -61,7 +61,7 @@ const messageListRef = ref<InstanceType<typeof MessageList>>()
 
 onMounted(() => {
   const props = page.props as ChatPageProps
-  store.setInitialData(props.conversations, props.users, props.auth)
+  store.setInitialData(props.conversations, props.users, props.auth, props.onlineUserIds)
   initializeEcho()
 })
 
