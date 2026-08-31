@@ -43,10 +43,14 @@ export const useChatStore = defineStore('chat', () => {
     convs: Conversation[],
     userList: User[],
     auth: User,
+    onlineIds: Record<number, true>,
   ) {
     conversations.value = convs
     users.value = userList
     authUser.value = auth
+
+    const ids = Object.keys(onlineIds).map(Number)
+    ids.forEach((id) => onlineUsers.value.add(id))
   }
 
   async function setActiveConversation(conversation: Conversation) {

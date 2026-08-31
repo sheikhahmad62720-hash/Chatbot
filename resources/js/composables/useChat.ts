@@ -1,9 +1,11 @@
 import Echo from 'laravel-echo'
 import Pusher from 'pusher-js'
+import axios from 'axios'
 import { useChatStore } from '@/stores/chatStore'
 import type { BroadcastMessage, BroadcastTyping, BroadcastRead } from '@/types/chat'
 
 let echo: Echo<'reverb'> | null = null
+let heartbeatInterval: ReturnType<typeof setInterval> | null = null
 
 export function useChat() {
   const store = useChatStore()
@@ -27,6 +29,9 @@ export function useChat() {
     })
 
     subscribeToChannels()
+    goOnline()
+    startHeartbeat()
+    listenForUnload()
   }
 
   function subscribeToChannels() {
@@ -35,6 +40,9 @@ export function useChat() {
     echo.private('users.online')
       .listen('.user.online', (e: { user: { id: number } }) => {
         store.handleUserOnline(e.user.id)
+      })
+      .listen('.user.offline', (e: { user: { id: number } }) => {
+        store.handleUserOffline(e.user.id)
       })
 
     const conversationIds = store.conversations.map((c) => c.id)
@@ -59,7 +67,39 @@ export function useChat() {
       })
   }
 
+  function goOnline() {
+    axios.post('/chat/presence/online').catch(() => {})
+    if (store.authUser) {
+      store.handleUserOnline(store.authUser.id)
+    }
+  }
+
+  function goOffline() {
+    navigator.sendBeacon('/chat/presence/offline')
+    if (store.authUser) {
+      store.handleUserOffline(store.authUser.id)
+    }
+  }
+
+  function startHeartbeat() {
+    heartbeatInterval = setInterval(() => {
+      axios.post('/chat/presence/online').catch(() => {})
+    }, 30000)
+  }
+
+  function listenForUnload() {
+    window.addEventListener('beforeunload', goOffline)
+  }
+
   function disconnectEcho() {
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval)
+      heartbeatInterval = null
+    }
+
+    window.removeEventListener('beforeunload', goOffline)
+    goOffline()
+
     if (echo) {
       echo.disconnect()
       echo = null
