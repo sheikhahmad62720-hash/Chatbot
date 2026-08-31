@@ -42,4 +42,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('chat.typing');
     Route::post('/chat/conversation', [ChatController::class, 'createOrGet'])
         ->name('chat.conversation.create');
+    Route::post('/chat/presence/online', [ChatController::class, 'goOnline'])
+        ->name('chat.presence.online');
+    Route::post('/chat/presence/offline', [ChatController::class, 'goOffline'])
+        ->name('chat.presence.offline');
 });

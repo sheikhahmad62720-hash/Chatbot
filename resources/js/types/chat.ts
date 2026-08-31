@@ -40,6 +40,7 @@ export interface ChatPageProps {
   conversations: Conversation[]
   users: User[]
   auth: User
+  onlineUserIds: Record<number, true>
 }
 
 export interface BroadcastMessage {
