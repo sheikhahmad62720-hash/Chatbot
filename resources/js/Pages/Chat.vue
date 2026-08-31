@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import { useChatStore } from '@/stores/chatStore'
 import { useChat } from '@/composables/useChat'
@@ -56,15 +56,16 @@ import type { ChatPageProps } from '@/types/chat'
 
 const page = usePage<ChatPageProps>()
 const store = useChatStore()
-const { initializeEcho, subscribeToConversation } = useChat()
+const { initializeEcho, disconnectEcho } = useChat()
 const messageListRef = ref<InstanceType<typeof MessageList>>()
 
 onMounted(() => {
   const props = page.props as ChatPageProps
   store.setInitialData(props.conversations, props.users, props.auth)
+  initializeEcho()
+})
 
-  setTimeout(() => {
-    initializeEcho()
-  }, 500)
+onUnmounted(() => {
+  disconnectEcho()
 })
 </script>
